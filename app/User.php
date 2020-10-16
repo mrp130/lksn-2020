@@ -36,4 +36,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->role == "admin";
     }
+
+    public function division()
+    {
+        return $this->belongsTo('App\Division');
+    }
 }

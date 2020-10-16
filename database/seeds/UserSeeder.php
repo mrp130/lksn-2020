@@ -1,6 +1,6 @@
 <?php
 
-use App\User;
+use App\Division;
 use Illuminate\Database\Seeder;
 
 class UserSeeder extends Seeder
@@ -16,24 +16,29 @@ class UserSeeder extends Seeder
         $totals = [5, 3, 7, 4];
 
         for($i = 0; $i < 4; $i++) {
-            $division = $divisions[$i];
+            $division = Division::create([
+                'name' => $divisions[$i],
+            ]);
+
             for($j = 0; $j < $totals[$i]; $j++) {
-                $username = strtolower($division) . '_' . ($j+1);
-                User::create([
+                $username = strtolower($division->name) . '_' . ($j+1);
+                $division->users()->create([
                     'username' => $username,
                     'password' => bcrypt($username),
-                    'division' => $division,
                     'role' => 'user',
                 ]);
             }
         }
 
+        $division = Division::create([
+            'name' => "HR",
+        ]);
+
         for($i = 0; $i < 3; $i++) {
             $username = 'hr_' . ($i+1);
-            User::create([
+            $division->users()->create([
                 'username' => $username,
                 'password' => bcrypt($username),
-                'division' => 'HR',
                 'role' => 'admin',
             ]);
         }
