@@ -13,9 +13,4 @@ class Choice extends Model
     {
         return $this->belongsTo('App\Poll');
     }
-
-    public function users()
-    {
-        return $this->belongsToMany('App\User')->withTimestamps();
-    }
 }

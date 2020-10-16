@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
     public function run()
     {
         $divisions = ['Payment', 'Procurement', 'IT', 'Finance'];
-        $totals = [5, 3, 7, 4];
+        $totals = [5, 3, 7, 3];
 
         for($i = 0; $i < 4; $i++) {
             $division = Division::create([

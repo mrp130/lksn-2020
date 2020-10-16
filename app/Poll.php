@@ -12,7 +12,7 @@ class Poll extends Model
     use SoftDeletes;
 
     protected $guarded = [];
-    protected $hidden = ['updated_at', 'deleted_at', 'created_by'];
+    protected $hidden = ['updated_at', 'deleted_at'];
     protected $appends = ['creator', 'result'];
     protected $with = ['choices'];
 
@@ -21,51 +21,75 @@ class Poll extends Model
         return $this->hasMany('App\Choice');
     }
 
-    public function createdBy()
-    {
-        return $this->belongsTo('App\User', 'created_by');
-    }
-
     public function getCreatorAttribute()
     {
-        return $this->createdBy->username;
+        return User::find($this->created_by)->username;
     }
 
     public function getResultAttribute()
     {
-        if(!$this->isVoted() && !$this->isDeadline() && !auth()->user()->isAdmin()) {
+        if (!$this->canViewResult()) {
             return null;
         }
 
-        $choice_ids = $this->choices->pluck('id')->all();
+        return $this->pollResult();
+    }
 
-        $result = DB::table('choice_user')
-            ->select('choice_id', DB::raw('count(1) as total'))
-            ->groupBy('choice_id')
-            ->whereIn('choice_id', $choice_ids)
-            ->get();
-
-        $result_id = $result->pluck('choice_id')->all();
-
-        foreach($choice_ids as $id) {
-            if(in_array($id, $result_id)) continue;
-            $result->push([
-                'choice_id' => $id,
-                'total' => 0,
-            ]);
+    public function pollResult()
+    {
+        $choices = $this->choices()->get()->keyBy('id')->all();
+        foreach($choices as &$choice) {
+            $choice['point'] = 0;
         }
 
-        return $result->sortBy('choice_id')->values()->all();
+        $divisions = Division::all();
+        foreach ($divisions as $division) {
+            $winners = $this->divisionResult($division);
+            if(count($winners) == 0) continue;
+
+            $point = 1/count($winners);
+            foreach($winners as $id) {
+                $choices[$id]['point'] += $point;
+            }
+        }
+
+        return collect($choices)->flatten()->all();
+    }
+
+    public function divisionResult(Division $division)
+    {
+        $votes = Vote::where('poll_id', $this->id)
+            ->groupBy('choice_id')
+            ->where('division_id', $division->id)
+            ->select('choice_id', DB::raw('count(1) as total'))
+            ->orderBy(DB::raw('count(1)', 'DESC'))
+            ->get();
+
+        if(count($votes) == 0) return [];
+
+        $max = $votes[0]['total'];
+        $ids = [$votes[0]['choice_id']];
+
+        for($i = 1; $i < count($votes); $i++) {
+            $vote = $votes[$i];
+            if($vote['total'] != $max) break;
+            array_push($ids, $vote['choice_id']);
+        }
+
+        return $ids;
+    }
+
+    public function canViewResult()
+    {
+        return $this->isVoted() || $this->isDeadline() || auth()->user()->isAdmin();
     }
 
     public function isVoted()
     {
         $user_id = auth()->user()->id;
 
-        $choice_ids = $this->choices->pluck('id')->all();
-        $count = DB::table('choice_user')
-            ->where('user_id', $user_id)
-            ->whereIn('choice_id', $choice_ids)
+        $count = Vote::where('user_id', $user_id)
+            ->where('poll_id', $this->id)
             ->count();
 
         return $count > 0;

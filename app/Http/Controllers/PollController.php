@@ -17,7 +17,7 @@ class PollController extends Controller
 
     public function index()
     {
-        return Poll::orderBy('created_at', 'DESC')->get();
+        return Poll::all()->sortByDesc('created_at');
     }
 
     public function store(Request $request)
@@ -103,7 +103,7 @@ class PollController extends Controller
             abort(422, 'already voted');
         }
 
-        $choice->users()->attach($user->id);
+        $choice->users()->attach($user->id, ['division_id', $user->division_id]);
         return response()->json(['message' => 'vote success']);
     }
 }
