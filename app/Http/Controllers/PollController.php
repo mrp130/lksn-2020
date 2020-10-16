@@ -73,9 +73,9 @@ class PollController extends Controller
             abort(422, "invalid choice");
         }
 
-        $poll = $choice->poll;
+        $poll = Poll::find($id);
 
-        if($poll->id != $id) {
+        if($poll == null || $poll->id != $choice->poll_id) {
             abort(422, 'invalid poll');
         }
 
@@ -83,7 +83,7 @@ class PollController extends Controller
             abort(422, 'voting deadline');
         }
 
-        if($poll->isVoted($user->id)) {
+        if($poll->isVoted()) {
             abort(422, 'already voted');
         }
 
