@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,8 +12,8 @@ class Poll extends Model
     use SoftDeletes;
 
     protected $guarded = [];
-    protected $hidden = ['updated_at', 'deleted_at'];
-    protected $appends = ['result', 'is_voted'];
+    protected $hidden = ['updated_at', 'deleted_at', 'created_by'];
+    protected $appends = ['creator', 'result'];
     protected $with = ['choices'];
 
     public function choices()
@@ -20,9 +21,19 @@ class Poll extends Model
         return $this->hasMany('App\Choice');
     }
 
+    public function createdBy()
+    {
+        return $this->belongsTo('App\User', 'created_by');
+    }
+
+    public function getCreatorAttribute()
+    {
+        return $this->createdBy->username;
+    }
+
     public function getResultAttribute()
     {
-        if(!$this->isVoted()) {
+        if(!$this->isVoted() && !$this->isDeadline() && !auth()->user()->isAdmin()) {
             return null;
         }
 
@@ -60,8 +71,8 @@ class Poll extends Model
         return $count > 0;
     }
 
-    public function getIsVotedAttribute()
+    public function isDeadline()
     {
-        return $this->isVoted();
+        return $this->deadline < Carbon::now();
     }
 }

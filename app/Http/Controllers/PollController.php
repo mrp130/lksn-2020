@@ -22,6 +22,11 @@ class PollController extends Controller
 
     public function store(Request $request)
     {
+        $user = Auth::user();
+        if(!$user->isAdmin()) {
+            abort(401, 'admin only');
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -39,6 +44,7 @@ class PollController extends Controller
             'title' => $title,
             'description' => $description,
             'deadline' => $deadline,
+            'created_by' => $user->id,
         ]);
 
         foreach ($choices as $choice) {
@@ -57,6 +63,11 @@ class PollController extends Controller
 
     public function destroy($id)
     {
+        $user = Auth::user();
+        if(!$user->isAdmin()) {
+            abort(401, 'admin only');
+        }
+
         $poll = Poll::find($id);
         if($poll == null) {
             abort(422, "invalid poll");
@@ -68,6 +79,11 @@ class PollController extends Controller
     public function vote($id, $choice_id)
     {
         $user = Auth::user();
+
+        if($user->isAdmin()) {
+            abort(401, 'admin cannot vote');
+        }
+
         $choice = Choice::find($choice_id);
         if($choice == null) {
             abort(422, "invalid choice");
@@ -79,7 +95,7 @@ class PollController extends Controller
             abort(422, 'invalid poll');
         }
 
-        if($poll->deadline < Carbon::now()) {
+        if($poll->isDeadline()) {
             abort(422, 'voting deadline');
         }
 
