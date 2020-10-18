@@ -15,6 +15,7 @@ class Poll extends Model
     protected $hidden = ['updated_at', 'deleted_at'];
     protected $appends = ['creator', 'result'];
     protected $with = ['choices'];
+    protected $dates = ['deadline'];
 
     public function choices()
     {

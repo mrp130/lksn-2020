@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Choice;
 use App\Poll;
+use App\Vote;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +19,7 @@ class PollController extends Controller
 
     public function index()
     {
-        return Poll::all()->sortByDesc('created_at');
+        return Poll::all()->sortByDesc('created_at')->flatten();
     }
 
     public function store(Request $request)
@@ -107,7 +108,13 @@ class PollController extends Controller
             abort(422, 'already voted');
         }
 
-        $choice->users()->attach($user->id, ['division_id', $user->division_id]);
+        Vote::create([
+            'user_id' => $user->id,
+            'poll_id' => $poll->id,
+            'choice_id' => $choice->id,
+            'division_id' => $user->division_id,
+        ]);
+
         return response()->json(['message' => 'vote success']);
     }
 }

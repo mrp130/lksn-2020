@@ -7,5 +7,5 @@ use Illuminate\Support\Facades\DB;
 
 class Vote extends Model
 {
-
+    protected $guarded = [];
 }
