@@ -7,6 +7,7 @@ use App\Poll;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Date;
 
 class PollController extends Controller
 {
@@ -39,6 +40,9 @@ class PollController extends Controller
         $description = $request->input('description');
         $deadline = $request->input('deadline');
         $choices = $request->input('choices');
+
+        $d = Carbon::parse($deadline);
+        $deadline = $d->toRfc3339String();
 
         $poll = Poll::create([
             'title' => $title,
