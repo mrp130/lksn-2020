@@ -16,7 +16,7 @@ class CreateChoicesTable extends Migration
         Schema::create('choices', function (Blueprint $table) {
             $table->id();
             $table->string("choice");
-            $table->foreignId('poll_id');
+            $table->foreignId('poll_id')->constrained();
             $table->timestamps();
         });
     }
