@@ -26,7 +26,7 @@ class AddDivisionIdToVotesTable extends Migration
     public function down()
     {
         Schema::table('votes', function (Blueprint $table) {
-            //
+            $table->dropForeign(['user_id']);
         });
     }
 }
